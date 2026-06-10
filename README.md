@@ -1,35 +1,71 @@
-# Modelo de Skill Alexa para integrar o ChatGPT da OpenAI
-Use o ChatGPT-4 na Alexa 😊  
+# Skill Alexa com OpenAI
 
-# Instruções
-- Crie uma conta e uma chave de autenticação de API na OpenAI: https://platform.openai.com/account/api-keys
-- Coloque crédito pra poder usar a API: https://platform.openai.com/account/billing/overview
-> *IMPORTANTE: a API e o ChatGPT Plus são coisas diferentes, a assinatura do ChatGPT Plus não te dá acesso a API.
+Skill Alexa em Python para responder perguntas em portugues do Brasil usando a API da OpenAI.
 
-A API é paga por uso, ou seja por cada pergunta e resposta é cobrado alguns centavos ([veja aqui](https://openai.com/pricing)). O valor varia de acordo com o modelo selecionado.
+## Como usar
 
-- Crie uma Skill Alexa-hosted (Python) na Alexa: https://developer.amazon.com/alexa/console/ask/create-new-skill
-  - Name your Skill: Escolha um nome de sua preferência (Ex: ChatGPT)
-  - Choose a primary locale: Portuguese (BR)  
-  - Em tipo de experiência selecione: Other > Custom > Alexa-hosted (Python)  
-  - Hosting region: Pode deixar o padrão (US East (N. Virginia))
-  - Templates: Clique em Import Skill
-  - Insira o endereço: https://github.com/alexandremendoncaalvaro/skill-alexa-chatgpt4.git
+1. Crie uma conta e uma chave de API na OpenAI:
+   https://platform.openai.com/account/api-keys
 
-- Vá na aba "Code"
-- Insira sua chave no código: lambda > lambda_function.py:
-  ```python
-  openai.api_key = "substitua-por-sua-api-key-da-openai"
-  ```
-- Modifique no mesmo arquivo (lambda_function.py) pro modelo de sua preferência:
-  ```python
-  MODEL = "gpt-4"
-  ```
-  Exemplos: "gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"  
-  [veja a lista completa de modelos aqui](https://platform.openai.com/docs/models)
+2. Configure billing/creditos da API:
+   https://platform.openai.com/account/billing/overview
 
-- Salve as alterações
+   A API da OpenAI e o ChatGPT Plus sao produtos diferentes. A assinatura do ChatGPT Plus nao libera uso da API.
 
-- Faça Build do Modelo e Deploy do Código.
+3. Crie uma Skill Alexa-hosted em Python:
+   https://developer.amazon.com/alexa/console/ask/create-new-skill
 
-- Seja feliz!
+   Configuracao sugerida:
+   - Primary locale: Portuguese (BR)
+   - Experience type: Other > Custom
+   - Hosting: Alexa-hosted (Python)
+   - Hosting region: US East (N. Virginia), ou a regiao que voce preferir
+
+4. Importe ou envie este projeto para a skill.
+
+5. Em `lambda/lambda_function.py`, substitua o placeholder pela sua chave da OpenAI:
+
+   ```python
+   openai_api_key = "SUBSTITUA-POR-SUA-API-KEY-DA-OPENAI"
+   ```
+
+   Neste projeto a chave fica no contexto do Amazon Developer/Alexa-hosted. Nao versione o arquivo com a chave real.
+
+6. Se quiser, altere o modelo:
+
+   ```python
+   MODEL = "gpt-4o-mini"
+   ```
+
+7. Faca build do modelo de interacao e deploy do codigo.
+
+## Limites de uso
+
+O codigo possui limites simples para reduzir risco de custo e conversas longas:
+
+- ate 8 perguntas por sessao;
+- pergunta com ate 600 caracteres;
+- resposta com ate 450 tokens;
+- historico limitado as ultimas 6 mensagens da sessao;
+- timeout de 12 segundos na chamada para a OpenAI.
+
+Esses valores ficam em `lambda/lambda_function.py`:
+
+```python
+MAX_QUERY_CHARS = 600
+MAX_RESPONSE_TOKENS = 450
+MAX_TURNS_PER_SESSION = 8
+MAX_HISTORY_MESSAGES = 6
+```
+
+Para uso publico, tambem configure limites de gasto/budget na conta da OpenAI.
+
+## Privacidade
+
+A fala transcrita pela Alexa e enviada para a OpenAI para gerar a resposta. Evite usar a skill para informacoes sensiveis.
+
+Se voce publicar a skill para outras pessoas, revise as exigencias da Amazon para politica de privacidade e deixe claro que perguntas dos usuarios sao processadas por um servico externo.
+
+## Manifesto da skill
+
+O arquivo `skill.json` nao contem ARN fixo de Lambda. Em uma skill Alexa-hosted, o endpoint deve ser criado e associado pelo proprio ambiente da Amazon durante o deploy.
