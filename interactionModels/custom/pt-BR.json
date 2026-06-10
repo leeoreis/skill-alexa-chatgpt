@@ -19,6 +19,10 @@
           "samples": []
         },
         {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
           "slots": [
             {
               "name": "query",
@@ -31,7 +35,10 @@
             "responda {query}",
             "explique {query}",
             "me diga {query}",
-            "eu quero saber {query}"
+            "eu quero saber {query}",
+            "me responda {query}",
+            "quero perguntar {query}",
+            "minha pergunta é {query}"
           ]
         }
       ],

@@ -39,6 +39,15 @@ Skill Alexa em Python para responder perguntas em portugues do Brasil usando a A
 
 7. Faca build do modelo de interacao e deploy do codigo.
 
+## Como perguntar
+
+Por causa do tipo de slot `AMAZON.SearchQuery`, a pergunta precisa ter uma frase de apoio antes do texto livre. Exemplos:
+
+- "pergunte quem e o presidente do Brasil"
+- "explique o que e computacao quantica"
+- "me diga uma receita simples de bolo"
+- "minha pergunta e quanto tempo leva para chegar em Marte"
+
 ## Limites de uso
 
 O codigo possui limites simples para reduzir risco de custo e conversas longas:

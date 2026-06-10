@@ -1,4 +1,6 @@
 import logging
+from html import escape
+
 import ask_sdk_core.utils as ask_utils
 
 from ask_sdk_core.skill_builder import SkillBuilder
@@ -15,13 +17,14 @@ logger.setLevel(logging.INFO)
 
 openai_api_key = "SUBSTITUA-POR-SUA-API-KEY-DA-OPENAI"
 
-client = OpenAI(api_key=openai_api_key, timeout=12.0)
+client = OpenAI(api_key=openai_api_key, timeout=6.0)
 
 MODEL = "gpt-4o-mini"
 MAX_QUERY_CHARS = 600
-MAX_RESPONSE_TOKENS = 450
+MAX_RESPONSE_TOKENS = 300
 MAX_TURNS_PER_SESSION = 8
 MAX_HISTORY_MESSAGES = 6
+MAX_SPEECH_CHARS = 1200
 
 SYSTEM_MESSAGE = {
     "role": "system",
@@ -41,13 +44,11 @@ class LaunchRequestHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = (
-            "Bem vindo ao Chat 'Gepetê Quatro' da 'Open ei ai'! Qual a sua pergunta?"
-        )
+        speak_output = "Bem vindo ao Chat Gepetê Quatro. Diga: pergunte, e faça sua pergunta."
 
         return (
-            handler_input.response_builder.speak(speak_output)
-            .ask(speak_output)
+            handler_input.response_builder.speak(safe_speech(speak_output))
+            .ask(safe_speech(speak_output))
             .response
         )
 
@@ -66,8 +67,8 @@ class GptQueryIntentHandler(AbstractRequestHandler):
         if not query:
             speak_output = "Não entendi sua pergunta. Pode repetir?"
             return (
-                handler_input.response_builder.speak(speak_output)
-                .ask(speak_output)
+                handler_input.response_builder.speak(safe_speech(speak_output))
+                .ask(safe_speech(speak_output))
                 .response
             )
 
@@ -79,14 +80,14 @@ class GptQueryIntentHandler(AbstractRequestHandler):
                 "Esta conversa atingiu o limite de perguntas. "
                 "Abra a skill de novo para começar uma nova sessão."
             )
-            return handler_input.response_builder.speak(speak_output).response
+            return handler_input.response_builder.speak(safe_speech(speak_output)).response
 
         response = generate_gpt_response(query, session_attributes)
         session_attributes["turn_count"] = turn_count + 1
         handler_input.attributes_manager.session_attributes = session_attributes
 
         return (
-            handler_input.response_builder.speak(response)
+            handler_input.response_builder.speak(safe_speech(response))
             .ask("Você pode fazer uma nova pergunta ou falar: sair.")
             .response
         )
@@ -120,6 +121,17 @@ def generate_gpt_response(query, session_attributes):
         return "Desculpe, não consegui gerar uma resposta agora. Tente novamente em alguns instantes."
 
 
+def safe_speech(text):
+    if not text:
+        text = "Desculpe, não consegui gerar uma resposta para essa pergunta."
+
+    text = " ".join(str(text).split())
+    if len(text) > MAX_SPEECH_CHARS:
+        text = text[:MAX_SPEECH_CHARS].rsplit(" ", 1)[0] + "."
+
+    return escape(text, quote=False)
+
+
 class HelpIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         # type: (HandlerInput) -> bool
@@ -127,11 +139,27 @@ class HelpIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = "Como posso te ajudar?"
+        speak_output = "Diga: pergunte, e faça sua pergunta."
 
         return (
-            handler_input.response_builder.speak(speak_output)
-            .ask(speak_output)
+            handler_input.response_builder.speak(safe_speech(speak_output))
+            .ask(safe_speech(speak_output))
+            .response
+        )
+
+
+class FallbackIntentHandler(AbstractRequestHandler):
+    def can_handle(self, handler_input):
+        # type: (HandlerInput) -> bool
+        return ask_utils.is_intent_name("AMAZON.FallbackIntent")(handler_input)
+
+    def handle(self, handler_input):
+        # type: (HandlerInput) -> Response
+        speak_output = "Não entendi. Diga: pergunte, e depois faça sua pergunta."
+
+        return (
+            handler_input.response_builder.speak(safe_speech(speak_output))
+            .ask(safe_speech(speak_output))
             .response
         )
 
@@ -147,7 +175,7 @@ class CancelOrStopIntentHandler(AbstractRequestHandler):
         # type: (HandlerInput) -> Response
         speak_output = "Até logo!"
 
-        return handler_input.response_builder.speak(speak_output).response
+        return handler_input.response_builder.speak(safe_speech(speak_output)).response
 
 
 class SessionEndedRequestHandler(AbstractRequestHandler):
@@ -175,8 +203,8 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
         speak_output = "Desculpe, não consegui processar sua solicitação."
 
         return (
-            handler_input.response_builder.speak(speak_output)
-            .ask(speak_output)
+            handler_input.response_builder.speak(safe_speech(speak_output))
+            .ask(safe_speech(speak_output))
             .response
         )
 
@@ -186,6 +214,7 @@ sb = SkillBuilder()
 sb.add_request_handler(LaunchRequestHandler())
 sb.add_request_handler(GptQueryIntentHandler())
 sb.add_request_handler(HelpIntentHandler())
+sb.add_request_handler(FallbackIntentHandler())
 sb.add_request_handler(CancelOrStopIntentHandler())
 sb.add_request_handler(SessionEndedRequestHandler())
 
